@@ -6,12 +6,13 @@
 #include "SDL_messagebox.h"
 #include <SDL2/SDL.h>
 #include <GLES2/gl2.h>
+#include <core/node.hpp>
 
 struct RenderingContext {
 	SDL_Window* window = nullptr;
 	SDL_GLContext context = nullptr;
 	
-	bool createWindow(const char* title, int width, int height) {
+	bool create_window(const char* title, int width, int height) {
 		if (SDL_Init(SDL_INIT_VIDEO) != 0) { 
 			SDL_ShowSimpleMessageBox(
 				SDL_MESSAGEBOX_ERROR,
@@ -57,7 +58,11 @@ struct RenderingContext {
 		return true;
 	}
 
-	void swapBuffers() {
+	void render(const RenderableNode& renderable) {
+		
+	}
+
+	void swap_buffers() {
 		if (window) SDL_GL_SwapWindow(window);
 	}
 

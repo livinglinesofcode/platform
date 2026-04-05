@@ -1,4 +1,5 @@
 #pragma once
+
 #include <cmath>
 
 struct Vec3 {
@@ -11,7 +12,14 @@ struct Vec3 {
 	Vec3 operator-() const { return {-x, -y, -z}; }
 	Vec3 operator-(const Vec3& v) const { return *this + (-v); }
 	Vec3 operator*(float s) const { return {x*s, y*s, z*s}; }
-	Vec3 operator/(float s) const { return s != 0 ? Vec3{x/s, y/s, z/s} : Vec3{}; }
+	Vec3 operator/(float s) const {
+		if (s != 0.0f) {
+			float reciprocal = 1.0f / s;
+			return Vec3{x * reciprocal, y * reciprocal, z * reciprocal};
+		}
+
+		return -Vec3::one;
+	}
 	
 	Vec3& operator+=(const Vec3& v) { x+=v.x; y+=v.y; z+=v.z; return *this; }
 	Vec3& operator-=(const Vec3& v) { x-=v.x; y-=v.y; z-=v.z; return *this; }

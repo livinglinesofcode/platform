@@ -1,6 +1,7 @@
 #pragma once
-#include "vec3.hpp"
+
 #include <cmath>
+#include "vec3.hpp"
 
 struct Quat {
 	float x, y, z, w;
@@ -36,6 +37,17 @@ struct Quat {
 
 	Quat inverse() const {
 		return {-x, -y, -z, w};
+	}
+
+	void normalize() {
+		float len = std::sqrt(x*x + y*y + z*z + w*w);
+		if (len > 0.0f) {
+			float reciprocal = 1.0f / len;
+			x *= reciprocal;
+			y *= reciprocal;
+			z *= reciprocal;
+			w *= reciprocal;
+		}
 	}
 
 	Quat operator*(const Quat& b) const {

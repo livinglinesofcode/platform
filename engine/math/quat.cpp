@@ -1,3 +1,3 @@
 #include "quat.hpp"
 
-const Quat identity = Quat();
+const Quat Quat::identity = Quat();
