@@ -16,9 +16,9 @@ struct Quat {
 		float sr = sin(roll * 0.5f);
 
 		x = sr * cp * cy - cr * sp * sy;
-		y = cr * sp * cy + cr * cp * sy;
+		y = cr * sp * cy + sr * cp * sy;
 		z = cr * cp * sy - sr * sp * cy;
-		w = cr * cp * cy + sr * sp * cy;
+		w = cr * cp * cy + sr * sp * sy;
 	}
 
 	Quat(float x, float y, float z, float w) : x(x), y(y), z(z), w(w) {}
@@ -36,5 +36,21 @@ struct Quat {
 
 	Quat inverse() const {
 		return {-x, -y, -z, w};
+	}
+
+	Quat operator*(const Quat& b) const {
+		return {
+			w*b.x + x*b.w + y*b.z - z*b.y,
+			w*b.y - x*b.z + y*b.w + z*b.x,
+			w*b.z + x*b.y - y*b.x + z*b.w,
+			w*b.w - x*b.x - y*b.y - z*b.z
+		};
+	}
+
+	Vec3 operator*(const Vec3& v) const {
+		Vec3 qv{x, y, z};
+
+		Vec3 t = qv.cross(v) * 2.0f;
+		return v + t * w + qv.cross(t);
 	}
 };

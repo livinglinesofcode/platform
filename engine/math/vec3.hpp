@@ -34,6 +34,18 @@ struct Vec3 {
 		return len != 0 ? Vec3{x/len, y/len, z/len} : Vec3::zero;
 	}
 
+	Vec3 cross(const Vec3& b) const {
+		return Vec3{
+			y * b.z - z * b.y,
+			z * b.x - x * b.z,
+			x * b.y - y * b.x
+		};
+	}
+
+	float dot(const Vec3& b) const {
+		return x*b.x + y*b.y + z*b.z;
+	}
+
 	static const Vec3 zero;
 	static const Vec3 one;
 	static const Vec3 right;
