@@ -2,7 +2,7 @@
 
 int main() {
 	RenderingContext ctx;
-	if (!ctx.createWindow("Client", 800, 500)) return -1;
+	if (!ctx.create_window("Client", 800, 500)) return -1;
 
 	bool running = true;
 	SDL_Event e;
@@ -14,7 +14,7 @@ int main() {
 		glClearColor(0.2, 0.2, 0.3, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 		
-		ctx.swapBuffers();
+		ctx.swap_buffers();
 	}
 
 	ctx.destroy();
