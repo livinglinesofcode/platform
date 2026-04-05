@@ -1,0 +1,1 @@
+/usr/sbin/c++ -Wl,--dependency-file=CMakeFiles/client.dir/link.d CMakeFiles/client.dir/client/launcher/main.cpp.o -o client  libengine.a /usr/lib/libSDL2main.a /usr/lib/libSDL2-2.0.so.0.3200.64 /usr/lib/libGLESv2.so
