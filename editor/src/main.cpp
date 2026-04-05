@@ -22,11 +22,13 @@ int main() {
 
 	auto static_body = std::make_unique<StaticBody>();
 	static_body->transform.set_position(Vec3::forward * 5.0f);
+
+	StaticBody* static_body_ptr = static_body.get();
 	root->add_child(std::move(static_body));
 
 	auto renderable = std::make_unique<RenderableNode>();
 	renderable->mesh = Mesh::cube_mesh();
-	static_body->add_child(std::move(renderable));
+	static_body_ptr->add_child(std::move(renderable));
 
 	bool running = true;
 	SDL_Event e;

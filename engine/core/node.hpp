@@ -12,7 +12,7 @@ private:
 	Node* parent = nullptr;
 	std::vector<std::unique_ptr<Node>> children = {};
 public:
-	virtual ~Node() {} // polymorphic
+	virtual ~Node() = default; // polymorphic
 	const char* name = "Node"; // ASCII only
 	
 	Node* get_parent() const { return parent; }
@@ -24,7 +24,7 @@ public:
 	}
 	void add_child(std::unique_ptr<Node> child) {
 		child->parent = this;
-		parent->children.push_back(std::move(child));
+		children.push_back(std::move(child));
 	}
 
 	const std::vector<std::unique_ptr<Node>>& get_children() const { return children; }

@@ -9,12 +9,12 @@ struct Quat {
 	Quat() : x(0), y(0), z(0), w(1) {}
 
 	Quat(float pitch, float yaw, float roll) {
-		float cp = cos(pitch * 0.5f);
-		float sp = sin(pitch * 0.5f);
-		float cy = cos(yaw * 0.5f);
-		float sy = sin(yaw * 0.5f);
-		float cr = cos(roll * 0.5f);
-		float sr = sin(roll * 0.5f);
+		float cp = static_cast<float>(cos(pitch * 0.5f));
+		float sp = static_cast<float>(sin(pitch * 0.5f));
+		float cy = static_cast<float>(cos(yaw * 0.5f));
+		float sy = static_cast<float>(sin(yaw * 0.5f));
+		float cr = static_cast<float>(cos(roll * 0.5f));
+		float sr = static_cast<float>(sin(roll * 0.5f));
 
 		x = sr * cp * cy - cr * sp * sy;
 		y = cr * sp * cy + sr * cp * sy;
@@ -22,12 +22,12 @@ struct Quat {
 		w = cr * cp * cy + sr * sp * sy;
 	}
 
-	Quat(float x, float y, float z, float w) : x(x), y(y), z(z), w(w) {}
+	Quat(float nx, float ny, float nz, float nw) : x(nx), y(ny), z(nz), w(nw) {}
 
 	Quat(Vec3 axis, float radians) {
 		axis = axis.normalized();
-		float s = sin(radians / 2.0f);
-		w = cos(radians / 2.0f);
+		float s = static_cast<float>(sin(radians / 2.0f));
+		w = static_cast<float>(cos(radians / 2.0f));
 		x = axis.x * s;
 		y = axis.y * s;
 		z = axis.z * s;

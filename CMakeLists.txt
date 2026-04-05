@@ -9,23 +9,44 @@ include_directories(${SDL2_INCLUDE_DIRS})
 
 find_library(GLESv2_LIB NAMES GLESv2 libGLESv2.so)
 
-# Engine
-file(GLOB ENGINE_SOURCES 
-    engine/math/*.cpp
+# Angelscript
+file(GLOB ANGELSCRIPT_SOURCES
     engine/scripting/angelscript/source/*.cpp
+    engine/scripting/angelscript/add_on/*/*.cpp
+)
+
+add_library(angelscript STATIC ${ANGELSCRIPT_SOURCES})
+target_include_directories(angelscript PUBLIC
+    engine/scripting/angelscript/include
+    engine/scripting/angelscript/add_on
+)
+
+# Shaders
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/engine/rendering/shaders DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+
+# Engine
+file(GLOB ENGINE_SOURCES
+    engine/math/*.cpp
     engine/scripting/script_bindings.cpp
 )
 
-file(GLOB ADDON_SOURCES engine/scripting/angelscript/add_on/*/*.cpp)
-list(APPEND ENGINE_SOURCES ${ADDON_SOURCES})
-
 add_library(engine STATIC ${ENGINE_SOURCES})
-
-target_include_directories(engine PUBLIC 
+target_include_directories(engine PUBLIC
     engine
     engine/scripting/angelscript/include
     engine/scripting/angelscript/add_on
 )
+
+target_compile_options(engine PRIVATE
+    -Wall
+    -Wextra
+    -Wpedantic
+    -Werror
+    -Wshadow
+    -Wconversion
+)
+
+target_link_libraries(engine PUBLIC angelscript)
 
 # Editor
 add_executable(editor editor/src/main.cpp)
