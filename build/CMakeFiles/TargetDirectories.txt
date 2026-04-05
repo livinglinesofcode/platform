@@ -1,5 +1,0 @@
-/home/aleph/code/engine/build/CMakeFiles/engine.dir
-/home/aleph/code/engine/build/CMakeFiles/editor.dir
-/home/aleph/code/engine/build/CMakeFiles/client.dir
-/home/aleph/code/engine/build/CMakeFiles/edit_cache.dir
-/home/aleph/code/engine/build/CMakeFiles/rebuild_cache.dir

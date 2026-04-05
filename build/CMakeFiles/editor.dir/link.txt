@@ -1,1 +1,0 @@
-/usr/sbin/c++ -Wl,--dependency-file=CMakeFiles/editor.dir/link.d CMakeFiles/editor.dir/editor/src/main.cpp.o -o editor  libengine.a /usr/lib/libSDL2main.a /usr/lib/libSDL2-2.0.so.0.3200.64 /usr/lib/libGLESv2.so
