@@ -5,9 +5,9 @@
 struct Transform
 {
 private:
-	Vec3 position = Vec3::zero;
-	Quat rotation = Quat::identity;
-	Vec3 scale    = Vec3::one;
+	Vec3 position    = Vec3::zero;
+	Quat orientation = Quat::identity;
+	Vec3 scale       = Vec3::one;
 
 	bool dirty = true;
 public:
@@ -17,9 +17,9 @@ public:
 		dirty = true;
 	}
 
-	Quat get_rotation() const { return rotation; }
-	void set_rotation(const Quat& r) {
-		rotation = r;
+	Quat get_orientation() const { return orientation; }
+	void set_orientation(const Quat& o) {
+		orientation = o;
 		dirty = true;
 	}
 

@@ -1,12 +1,13 @@
 #pragma once
 
 #include "node.hpp"
+#include <math/utils.hpp>
 
 class Camera : public SpatialNode {
 private:
 	std::pair<uint32_t, uint32_t> viewport_size;
 public:
-	float fov = 70.0f;
+	float fov = radians(70.0f);
 	float near = 0.1f;
 	float far = 500.0f;
 

@@ -5,16 +5,19 @@
 #include <string>
 #include "SDL_error.h"
 #include "SDL_messagebox.h"
+#include "SDL_video.h"
 #include "rendering/mesh.hpp"
+#include <glad/glad.h>
 #include <SDL2/SDL.h>
-#include <GLES2/gl2.h>
 #include <core/node.hpp>
 #include <fstream>
 #include <vector>
 #include <math/vec3.hpp>
-#include <cstdint>
 #include <cerrno>
 #include <cstring>
+#include <core/camera.hpp>
+#include <math/mat4.hpp>
+#include <iostream>
 
 struct RenderingContext {
 	SDL_Window* window = nullptr;
@@ -63,8 +66,20 @@ struct RenderingContext {
 			return false;
 		}
 
+		if (!gladLoadGLES2Loader((GLADloadproc)SDL_GL_GetProcAddress)) {
+			SDL_ShowSimpleMessageBox(
+				SDL_MESSAGEBOX_ERROR,
+				"Error",
+				"Failed to load glad with GLES2 loader.",
+				nullptr
+			);
+			return false;
+		}
+
 		SDL_GL_SetSwapInterval(1); // vsync
-		
+		//glEnable(GL_DEPTH_TEST);
+		//glDepthFunc(GL_LESS);
+
 		GLuint vshader = compile_shader("shaders/vertex.vert", GL_VERTEX_SHADER);
 		if (vshader == 0) return false;
 		GLuint fshader = compile_shader("shaders/fragment.frag", GL_FRAGMENT_SHADER);
@@ -87,7 +102,12 @@ struct RenderingContext {
 				msg.c_str(),
 				nullptr
 			);
+
+			return false;
 		}
+
+		glUseProgram(program);
+		glViewport(0, 0, width, height);
 
 		return true;
 	}
@@ -133,12 +153,50 @@ struct RenderingContext {
 		return shader;
 	}
 
-	void render(const RenderableNode& renderable) {
-		char* vbo;
-
+	void render(const RenderableNode& renderable, Camera& camera) {
 		Mesh* mesh = renderable.mesh;
-		std::vector<Vec3> verts = mesh->vertices;
-		std::vector<uint32_t> indices = mesh->indices;
+
+		Transform model_transform = renderable.transform;
+		Transform cam_transform = camera.transform;
+		
+		Mat4 model = Mat4::translate(model_transform.get_position()) *
+					 Mat4::rotate(model_transform.get_orientation());
+
+		Mat4 view = Mat4::rotate(cam_transform.get_orientation().conjugate()) *
+					Mat4::translate(-cam_transform.get_position());
+
+		Mat4 proj = Mat4::perspective(camera.fov, camera.aspect(), camera.near, camera.far);
+		Mat4 mvp = proj * view * model;
+
+		glBindBuffer(GL_ARRAY_BUFFER, mesh->VBO);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->EBO);
+
+		GLuint posAttrib = static_cast<GLuint>(glGetAttribLocation(program, "a_pos"));
+		std::cout << posAttrib << std::endl;
+		glEnableVertexAttribArray(posAttrib);
+		glVertexAttribPointer(
+			posAttrib,
+			3,
+			GL_FLOAT,
+			GL_FALSE,
+			sizeof(Vec3),
+			(void*)0
+		);
+
+		GLint loc = glGetUniformLocation(program, "u_mvp");
+		glUniformMatrix4fv(loc, 1, GL_FALSE, mvp.m);
+
+		glDrawElements(
+			GL_TRIANGLES,
+			static_cast<GLsizei>(mesh->indices.size()),
+			GL_UNSIGNED_SHORT,
+			0
+		);
+
+		glDisableVertexAttribArray(posAttrib);
+
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
 
 	void swap_buffers() {

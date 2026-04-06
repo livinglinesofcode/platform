@@ -1,14 +1,31 @@
 #pragma once
 
+#include <glad/glad.h>
 #include <vector>
 #include <math/vec3.hpp>
 #include <cstdint>
 
 struct Mesh {
 	std::vector<Vec3> vertices;
-	std::vector<uint32_t> indices;
+	std::vector<uint16_t> indices;
 
-	static Mesh* cube_mesh(float size = 1.0f) {
+	GLuint VBO = 0;
+	GLuint EBO = 0;
+
+	void upload_to_gpu() {
+		glGenBuffers(1, &VBO);
+		glBindBuffer(GL_ARRAY_BUFFER, VBO);
+		glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(vertices.size() * sizeof(Vec3)), vertices.data(), GL_STATIC_DRAW);
+
+		glGenBuffers(1, &EBO);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLsizeiptr>(indices.size() * sizeof(uint16_t)), indices.data(), GL_STATIC_DRAW);
+
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	}
+
+	static Mesh* cube(float size = 1.0f) {
 		Mesh* mesh = new Mesh();
 		float s = size * 0.5f;
 
@@ -27,8 +44,7 @@ struct Mesh {
 			0,1,5, 5,4,0  // bottom
 		};
 
+		mesh->upload_to_gpu();
 		return mesh;
 	}
 };
-
-

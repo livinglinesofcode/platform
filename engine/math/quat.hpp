@@ -35,12 +35,13 @@ struct Quat {
 
 	static const Quat identity;
 
-	Quat inverse() const {
+	Quat conjugate() const {
 		return {-x, -y, -z, w};
 	}
 
 	void normalize() {
 		float len = std::sqrt(x*x + y*y + z*z + w*w);
+
 		if (len > 0.0f) {
 			float reciprocal = 1.0f / len;
 			x *= reciprocal;
