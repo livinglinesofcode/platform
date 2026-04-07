@@ -22,6 +22,9 @@ struct RenderingContext {
 	SDL_Window* window = nullptr;
 	SDL_GLContext context = nullptr;
 	GLuint program;
+	
+	GLuint grid_VBO;
+	int grid_vertex_count;
 
 	bool create_window(const char* title, int width, int height) {
 		if (SDL_Init(SDL_INIT_VIDEO) != 0) { 
@@ -153,6 +156,68 @@ struct RenderingContext {
 		return shader;
 	}
 
+	void upload_grid(float half_size, float spacing) {
+		std::vector<float> verts;
+
+		float hs = half_size * spacing;
+
+		for (float i = -half_size; i <= half_size; ++i) {
+			float is = i * spacing;
+
+			verts.push_back(-hs); verts.push_back(0.0f); verts.push_back(is);
+			verts.push_back(hs); verts.push_back(0.0f); verts.push_back(is);
+
+			verts.push_back(-is); verts.push_back(0.0f); verts.push_back(hs);
+			verts.push_back(is); verts.push_back(0.0f); verts.push_back(hs);
+		}
+
+		grid_vertex_count = verts.size() / 3;
+
+		glGenBuffers(1, &grid_VBO);
+		glBindBuffer(GL_ARRAY_BUFFER, grid_VBO);
+
+		glBufferData(
+			GL_ARRAY_BUFFER,
+			static_cast<GLsizeiptr>(verts.size() * sizeof(float)),
+			verts.data(),
+			GL_STATIC_DRAW
+		);
+
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+	}
+
+	void render_grid(Camera& camera) {
+		glBindBuffer(GL_ARRAY_BUFFER, grid_VBO);
+
+		GLuint pos = static_cast<GLuint>(glGetAttribLocation(program, "a_pos"));
+		glEnableVertexAttribArray(pos);
+
+		glVertexAttribPointer(
+			pos,
+			3,
+			GL_FLOAT,
+			GL_FALSE,
+			3 * sizeof(float),
+			(void*)0
+		);
+
+		Mat4 proj = Mat4::perspective(camera.fov, camera.aspect(), camera.near, camera.far);
+
+		Mat4 model = Mat4::identity();
+
+		Mat4 view = Mat4::rotate(camera.transform.get_orientation().conjugate()) *
+					Mat4::translate(-camera.transform.get_position());
+
+		Mat4 mvp = proj * view * model;
+
+		GLint loc = glGetUniformLocation(program, "u_mvp");
+		glUniformMatrix4fv(loc, 1, GL_FALSE, mvp.m);
+
+		glDrawArrays(GL_LINES, 0, grid_vertex_count);
+
+		glad_glDisableVertexAttribArray(pos);
+	}
+
 	void render(const RenderableNode& renderable, Camera& camera) {
 		Mesh* mesh = renderable.mesh;
 
@@ -195,7 +260,7 @@ struct RenderingContext {
 			3,
 			GL_FLOAT,
 			GL_FALSE,
-			sizeof(Vertex),
+			sizeof(float),
 			(void*)0
 		);
 

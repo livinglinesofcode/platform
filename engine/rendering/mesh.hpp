@@ -4,12 +4,8 @@
 #include <vector>
 #include <cstdint>
 
-struct Vertex {
-	float x, y, z;
-};
-
 struct Mesh {
-	std::vector<Vertex> vertices;
+	std::vector<float> vertices;
 	std::vector<uint16_t> indices;
 
 	GLuint VBO = 0;
@@ -18,7 +14,7 @@ struct Mesh {
 	void upload_to_gpu() {
 		glGenBuffers(1, &VBO);
 		glBindBuffer(GL_ARRAY_BUFFER, VBO);
-		glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(vertices.size() * sizeof(Vertex)), vertices.data(), GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(vertices.size() * sizeof(float)), vertices.data(), GL_STATIC_DRAW);
 
 		glGenBuffers(1, &EBO);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
@@ -33,8 +29,8 @@ struct Mesh {
 		float s = size * 0.5f;
 
 		mesh->vertices = {
-			{-s, -s, -s}, { s, -s, -s}, { s,  s, -s}, {-s,  s, -s}, // back face
-			{-s, -s,  s}, { s, -s,  s}, { s,  s,  s}, {-s,  s,  s}  // front face
+			{-s, -s, -s,  s, -s, -s,  s,  s, -s,  -s,  s, -s, // back face
+			-s, -s,  s,  s, -s,  s,  s,  s,  s,  -s,  s,  s}  // front face
 		};
 
 		// 12 tris (2 per face)
