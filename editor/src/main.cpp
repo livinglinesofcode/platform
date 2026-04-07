@@ -72,6 +72,7 @@ int main() {
 		const Uint8* keys = SDL_GetKeyboardState(nullptr);
 		Uint32 buttons = SDL_GetRelativeMouseState(&dx, &dy);
 
+		// FIXME: buggy W and S, pitch zooms in
 		if (buttons & SDL_BUTTON(SDL_BUTTON_RIGHT)) {
 			// camera orientation input
 			if (buttons) {
