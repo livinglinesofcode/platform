@@ -1,6 +1,8 @@
 #pragma once
 
 #include <cmath>
+#include <format>
+#include <math/utils.hpp>
 
 struct Vec3 {
 	float x, y, z;
@@ -52,6 +54,10 @@ struct Vec3 {
 
 	float dot(const Vec3& b) const {
 		return x*b.x + y*b.y + z*b.z;
+	}
+
+	std::string to_string() const {
+		return std::format("Vec3({}, {}, {})", format_float(x), format_float(y), format_float(z));
 	}
 
 	static const Vec3 zero;

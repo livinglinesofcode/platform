@@ -89,5 +89,5 @@ struct Mat4 {
 		mat.m[13] = -u.dot(eye);
 		mat.m[14] = f.dot(eye);
 		return mat;
-    }
+	}
 };

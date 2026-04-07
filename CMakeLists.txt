@@ -59,5 +59,5 @@ add_executable(editor editor/src/main.cpp)
 target_link_libraries(editor PRIVATE engine ${SDL2_LIBRARIES} ${GLESv2_LIB})
 
 # Client
-add_executable(client client/launcher/main.cpp)
-target_link_libraries(client PRIVATE engine ${SDL2_LIBRARIES} ${GLESv2_LIB})
+#add_executable(client client/launcher/main.cpp)
+#target_link_libraries(client PRIVATE engine ${SDL2_LIBRARIES} ${GLESv2_LIB})

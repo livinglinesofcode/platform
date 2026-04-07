@@ -2,6 +2,8 @@
 
 #include <cmath>
 #include "vec3.hpp"
+#include <format>
+#include <math/utils.hpp>
 
 struct Quat {
 	float x, y, z, w;
@@ -49,6 +51,10 @@ struct Quat {
 			z *= reciprocal;
 			w *= reciprocal;
 		}
+	}
+
+	std::string to_string() {
+		return std::format("Quat({}, {}, {}, {})", x, y, z, w);
 	}
 
 	Quat operator*(const Quat& b) const {

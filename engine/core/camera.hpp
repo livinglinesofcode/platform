@@ -5,7 +5,7 @@
 
 class Camera : public SpatialNode {
 private:
-	std::pair<uint32_t, uint32_t> viewport_size;
+	std::pair<uint16_t, uint16_t> viewport_size;
 public:
 	float fov = radians(70.0f);
 	float near = 0.1f;

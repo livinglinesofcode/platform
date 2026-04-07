@@ -12,12 +12,11 @@
 #include <core/node.hpp>
 #include <fstream>
 #include <vector>
-#include <math/vec3.hpp>
 #include <cerrno>
 #include <cstring>
 #include <core/camera.hpp>
 #include <math/mat4.hpp>
-#include <iostream>
+#include <cstdio>
 
 struct RenderingContext {
 	SDL_Window* window = nullptr;
@@ -77,9 +76,7 @@ struct RenderingContext {
 		}
 
 		SDL_GL_SetSwapInterval(1); // vsync
-		//glEnable(GL_DEPTH_TEST);
-		//glDepthFunc(GL_LESS);
-
+		
 		GLuint vshader = compile_shader("shaders/vertex.vert", GL_VERTEX_SHADER);
 		if (vshader == 0) return false;
 		GLuint fshader = compile_shader("shaders/fragment.frag", GL_FRAGMENT_SHADER);
@@ -108,6 +105,9 @@ struct RenderingContext {
 
 		glUseProgram(program);
 		glViewport(0, 0, width, height);
+		glEnable(GL_DEPTH_TEST);
+		glDepthFunc(GL_LESS);
+		glDisable(GL_CULL_FACE);
 
 		return true;
 	}
@@ -156,34 +156,51 @@ struct RenderingContext {
 	void render(const RenderableNode& renderable, Camera& camera) {
 		Mesh* mesh = renderable.mesh;
 
-		Transform model_transform = renderable.transform;
-		Transform cam_transform = camera.transform;
-		
-		Mat4 model = Mat4::translate(model_transform.get_position()) *
-					 Mat4::rotate(model_transform.get_orientation());
+		// big ahh debug prints sorry
+		//std::cout << "Camera position: " << camera.get_world_position().to_string() << std::endl;
+		//std::cout << "Camera orientation: " << camera.get_world_orientation().to_string() << std::endl;
+		//std::cout << "Camera FOV (radians): " << camera.fov << std::endl;
+		//std::cout << "Camera near: " << camera.near << std::endl;
+		//std::cout << "Camera far: " << camera.far << std::endl;
+		//std::cout << "Camera viewport: {" << camera.get_viewport_size().first << ", " << camera.get_viewport_size().second << "}" << std::endl;
+		//std::cout << "Camera aspect: " << camera.aspect() << std::endl;
 
-		Mat4 view = Mat4::rotate(cam_transform.get_orientation().conjugate()) *
-					Mat4::translate(-cam_transform.get_position());
+		//std::cout << "Renderable position: " << renderable.get_world_position().to_string() << std::endl;
+		//std::cout << "Renderable orientation: " << renderable.get_world_orientation().to_string() << std::endl;
+
+		Mat4 model = Mat4::translate(renderable.get_world_position()) *
+					 Mat4::rotate(renderable.get_world_orientation());
+		//print_mat4("model", model);
+
+		Mat4 view = Mat4::rotate(camera.get_world_orientation().conjugate()) *
+					Mat4::translate(-camera.get_world_position());
+		//print_mat4("view", view);
 
 		Mat4 proj = Mat4::perspective(camera.fov, camera.aspect(), camera.near, camera.far);
-		Mat4 mvp = proj * view * model;
+		//print_mat4("projection", proj);
 
+		Mat4 mvp = proj * view * model;
+		//print_mat4("mvp", mvp);
+
+		//printf("VBO = %u, size = %zu\n", mesh->VBO, mesh->vertices.size() * sizeof(Vertex));
+		//printf("EBO = %u, size = %zu\n", mesh->EBO, mesh->indices.size() * sizeof(uint16_t));
 		glBindBuffer(GL_ARRAY_BUFFER, mesh->VBO);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->EBO);
 
-		GLuint posAttrib = static_cast<GLuint>(glGetAttribLocation(program, "a_pos"));
-		std::cout << posAttrib << std::endl;
-		glEnableVertexAttribArray(posAttrib);
+		GLuint pos_attrib = static_cast<GLuint>(glGetAttribLocation(program, "a_pos"));
+		//printf("a_pos pos_attrib = %u\n", pos_attrib);
+		glEnableVertexAttribArray(pos_attrib);
 		glVertexAttribPointer(
-			posAttrib,
+			pos_attrib,
 			3,
 			GL_FLOAT,
 			GL_FALSE,
-			sizeof(Vec3),
+			sizeof(Vertex),
 			(void*)0
 		);
 
 		GLint loc = glGetUniformLocation(program, "u_mvp");
+		//printf("u_mvp location = %d\n", loc);
 		glUniformMatrix4fv(loc, 1, GL_FALSE, mvp.m);
 
 		glDrawElements(
@@ -193,7 +210,7 @@ struct RenderingContext {
 			0
 		);
 
-		glDisableVertexAttribArray(posAttrib);
+		glDisableVertexAttribArray(pos_attrib);
 
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
