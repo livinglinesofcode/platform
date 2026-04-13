@@ -4,7 +4,6 @@
 #include <memory>
 #include <rendering/abstraction.hpp>
 #include <core/node.hpp>
-#include <core/node.cpp>
 #include <core/camera.hpp>
 #include <math/vec3.hpp>
 #include <physics/static_body.hpp>
@@ -19,43 +18,23 @@ int main() {
 	const uint16_t height = 500;
 	if (!ctx.create_window("Editor", width, height)) return -1;
 
-	auto root = std::make_unique<SpatialNode>();
+	std::unique_ptr<Node> root = std::make_unique<Node>();
 	root->name = "Root";
-	auto root_ptr = root.get();
 
-	auto editor_camera = std::make_unique<Camera>();
-	Camera* camera = editor_camera.get();
+	Camera* camera = static_cast<Camera*>(
+		root->add_child(std::make_unique<Camera>())
+	);
+	camera->local.position = Vec3::up * 5.0f;
 	camera->set_viewport_size(width, height);
-	camera->transform.set_position(Vec3::up * 5.0f);
-	root->add_child(std::move(editor_camera));
-
-	//auto static_body = std::make_unique<StaticBody>();
-	//static_body->transform.set_position(Vec3::forward * 5.0f);
-
-	//StaticBody* static_body_ptr = static_body.get();
-	//root->add_child(std::move(static_body));
-
-	//auto renderable = std::make_unique<RenderableNode>();
-	//renderable->mesh = Mesh::cube(1.0f);
-	//renderable->transform.set_position(Vec3::back * 5.0f);
-	//camera->look_at(renderable.get());
-	//renderable->name = "Renderable";
-
-	//std::cout << "Renderable world position: " << renderable->get_world_position().to_string() << std::endl;
-	//std::cout << "Renderable local position: " << renderable->transform.get_position().to_string() << std::endl;
-	//std::cout << "Camera world position: " << camera->get_world_position().to_string() << std::endl;
-	std::cout << "Camera forward: " << camera->get_forward().to_string() << std::endl;
-
-	//static_body_ptr->add_child(std::move(renderable));
 
 	ctx.upload_grid(50.0f, 5.0f);
 
 	int dx, dy;
 	const float cam_speed = 25.0f;
 	const float sensitivity = 0.5f;
-	const float rad = 89.9f * (3.14159265f / 180.0f);
-	float pitch = 0.0f;
-	float yaw = 0.0f;
+	const float rad = radians(89.9f);
+	float yaw = 0.0f;   // horizontal turn (-180, 180)
+	float pitch = 0.0f; // vertical tilt   (-90, 90)
 
 	bool running = true;
 	SDL_Event e;
@@ -77,48 +56,45 @@ int main() {
 			// camera orientation input
 			if (buttons) {
 				yaw += sensitivity * dx * dt;
-				pitch += sensitivity * dy * dt;
+				if (yaw >  PI) yaw -= TAU;
+				if (yaw < -PI) yaw += TAU;
+
+				pitch -= sensitivity * dy * dt;
 				pitch = std::clamp(pitch, -rad, rad);
 
 				Quat q_yaw = Quat(Vec3::up, yaw);
 				Quat q_pitch = Quat(Vec3::right, pitch);
 
-				camera->transform.set_orientation(q_yaw * q_pitch);
+				camera->local.orientation = q_yaw * q_pitch;
 			}
+
+			printf("(%.0f, %.0f)\n", degrees(yaw), degrees(pitch));
 
 			// camera position input
 			Vec3 dir = Vec3::zero;
 
 			if (keys[SDL_SCANCODE_W]) {
-				dir += camera->get_forward();
+				dir += Vec3::forward;
 			}
 			if (keys[SDL_SCANCODE_A]) {
-				dir -= camera->get_right();
+				dir += Vec3::left;
 			}
 			if (keys[SDL_SCANCODE_S]) {
-				dir -= camera->get_forward();
+				dir += Vec3::back;
 			}
 			if (keys[SDL_SCANCODE_D]) {
-				dir += camera->get_right();
+				dir += Vec3::right;
 			}
 
 			if (dir.length() > 0.0f) {
 				dir = dir.normalized();
 			}
 
-			camera->transform.set_position(camera->transform.get_position() + dir * dt * cam_speed);
-
-			std::cout << dir.to_string() << " " << camera->get_forward().to_string() << std::endl;
+			camera->local.position += dir * dt * cam_speed;
 		}
 
 		glClearColor(0.3f, 0.3f, 0.4f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-		//for (auto& d : descendants(root_ptr)) {
-		//	if (auto r = dynamic_cast<RenderableNode*>(d)) {
-		//		ctx.render(*r, *camera);
-		//	}
-		//}
 
 		ctx.render_grid(*camera);
 

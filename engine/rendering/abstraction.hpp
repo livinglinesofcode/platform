@@ -16,7 +16,7 @@
 #include <cstring>
 #include <core/camera.hpp>
 #include <math/mat4.hpp>
-#include <cstdio>
+#include <iostream>
 
 struct RenderingContext {
 	SDL_Window* window = nullptr;
@@ -110,7 +110,6 @@ struct RenderingContext {
 		glViewport(0, 0, width, height);
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LESS);
-		glDisable(GL_CULL_FACE);
 
 		return true;
 	}
@@ -171,7 +170,7 @@ struct RenderingContext {
 			verts.push_back(is); verts.push_back(0.0f); verts.push_back(hs);
 		}
 
-		grid_vertex_count = verts.size() / 3;
+		grid_vertex_count = static_cast<int>(verts.size() / 3);
 
 		glGenBuffers(1, &grid_VBO);
 		glBindBuffer(GL_ARRAY_BUFFER, grid_VBO);
@@ -186,7 +185,7 @@ struct RenderingContext {
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
 
-	void render_grid(Camera& camera) {
+	void render_grid(const Camera& camera) {
 		glBindBuffer(GL_ARRAY_BUFFER, grid_VBO);
 
 		GLuint pos = static_cast<GLuint>(glGetAttribLocation(program, "a_pos"));
@@ -201,14 +200,18 @@ struct RenderingContext {
 			(void*)0
 		);
 
-		Mat4 proj = Mat4::perspective(camera.fov, camera.aspect(), camera.near, camera.far);
+		const Mat4 proj = camera.get_projection();
+		std::cout << proj.to_string();
 
 		Mat4 model = Mat4::identity();
+		std::cout << model.to_string();
 
-		Mat4 view = Mat4::rotate(camera.transform.get_orientation().conjugate()) *
-					Mat4::translate(-camera.transform.get_position());
+		Mat4 view = Mat4::rotate(camera.local.orientation.conjugate()) *
+					Mat4::translate(-camera.local.position);
+		std::cout << view.to_string();
 
 		Mat4 mvp = proj * view * model;
+		std::cout << mvp.to_string();
 
 		GLint loc = glGetUniformLocation(program, "u_mvp");
 		glUniformMatrix4fv(loc, 1, GL_FALSE, mvp.m);
@@ -216,69 +219,6 @@ struct RenderingContext {
 		glDrawArrays(GL_LINES, 0, grid_vertex_count);
 
 		glad_glDisableVertexAttribArray(pos);
-	}
-
-	void render(const RenderableNode& renderable, Camera& camera) {
-		Mesh* mesh = renderable.mesh;
-
-		// big ahh debug prints sorry
-		//std::cout << "Camera position: " << camera.get_world_position().to_string() << std::endl;
-		//std::cout << "Camera orientation: " << camera.get_world_orientation().to_string() << std::endl;
-		//std::cout << "Camera FOV (radians): " << camera.fov << std::endl;
-		//std::cout << "Camera near: " << camera.near << std::endl;
-		//std::cout << "Camera far: " << camera.far << std::endl;
-		//std::cout << "Camera viewport: {" << camera.get_viewport_size().first << ", " << camera.get_viewport_size().second << "}" << std::endl;
-		//std::cout << "Camera aspect: " << camera.aspect() << std::endl;
-
-		//std::cout << "Renderable position: " << renderable.get_world_position().to_string() << std::endl;
-		//std::cout << "Renderable orientation: " << renderable.get_world_orientation().to_string() << std::endl;
-
-		Mat4 model = Mat4::translate(renderable.get_world_position()) *
-					 Mat4::rotate(renderable.get_world_orientation());
-		//print_mat4("model", model);
-
-		Mat4 view = Mat4::rotate(camera.get_world_orientation().conjugate()) *
-					Mat4::translate(-camera.get_world_position());
-		//print_mat4("view", view);
-
-		Mat4 proj = Mat4::perspective(camera.fov, camera.aspect(), camera.near, camera.far);
-		//print_mat4("projection", proj);
-
-		Mat4 mvp = proj * view * model;
-		//print_mat4("mvp", mvp);
-
-		//printf("VBO = %u, size = %zu\n", mesh->VBO, mesh->vertices.size() * sizeof(Vertex));
-		//printf("EBO = %u, size = %zu\n", mesh->EBO, mesh->indices.size() * sizeof(uint16_t));
-		glBindBuffer(GL_ARRAY_BUFFER, mesh->VBO);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->EBO);
-
-		GLuint pos_attrib = static_cast<GLuint>(glGetAttribLocation(program, "a_pos"));
-		//printf("a_pos pos_attrib = %u\n", pos_attrib);
-		glEnableVertexAttribArray(pos_attrib);
-		glVertexAttribPointer(
-			pos_attrib,
-			3,
-			GL_FLOAT,
-			GL_FALSE,
-			sizeof(float),
-			(void*)0
-		);
-
-		GLint loc = glGetUniformLocation(program, "u_mvp");
-		//printf("u_mvp location = %d\n", loc);
-		glUniformMatrix4fv(loc, 1, GL_FALSE, mvp.m);
-
-		glDrawElements(
-			GL_TRIANGLES,
-			static_cast<GLsizei>(mesh->indices.size()),
-			GL_UNSIGNED_SHORT,
-			0
-		);
-
-		glDisableVertexAttribArray(pos_attrib);
-
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
 
 	void swap_buffers() {

@@ -9,6 +9,10 @@ float radians(float degrees) {
 	return degrees * (PI / 180.0f);
 }
 
+float degrees(float radians) {
+	return radians * (180.0f / PI);
+}
+
 bool approx_equal(float a, float b, float eps) {
 	return std::fabs(a - b) <= eps;
 }

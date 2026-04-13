@@ -3,8 +3,9 @@
 #include "vec3.hpp"
 #include "quat.hpp"
 
+// collumn-major for OpenGL ES 2.0
 struct Mat4 {
-	float m[16]; // collumn-major
+	float m[16];
 
 	static Mat4 identity() {
 		Mat4 mat = {};
@@ -22,6 +23,7 @@ struct Mat4 {
 
 	static Mat4 rotate(const Quat& q) {
 		Mat4 mat = identity();
+
 		float xx = q.x * q.x, yy = q.y * q.y, zz = q.z * q.z;
 		float xy = q.x*q.y, xz = q.x*q.z, yz = q.y*q.z;
 		float wx = q.w*q.x, wy = q.w*q.y, wz = q.w*q.z;
@@ -54,40 +56,38 @@ struct Mat4 {
 			}
 		}
 
-		result.m[15] = 1.0f;
 		return result;
 	}
 
-	Mat4 operator*=(const Mat4& rhs) {
-		return *this * rhs;
+	void operator*=(const Mat4& rhs) {
+		*this = *this * rhs;
 	}
 
+	// +Z forward
 	static Mat4 perspective(float fov, float aspect, float near, float far) {
 		Mat4 mat = {};
 		float tan_half_fov = std::tan(fov * 0.5f);
 
 		mat.m[0] = 1.0f / (aspect * tan_half_fov);
 		mat.m[5] = 1.0f / (tan_half_fov);
-		mat.m[10] = -(far + near) / (far - near);
-		mat.m[11] = -1.0f;
-		mat.m[14] = -(2*far*near)/(far - near);
+		mat.m[10] = (far + near) / (far - near);
+		mat.m[11] = 1.0f;
+		mat.m[14] = (2*far*near)/(far - near);
 
 		return mat;
 	}
 
-	static Mat4 look_at(const Vec3& eye, const Vec3& center, const Vec3& up = Vec3::up) {
-		Vec3 f = (center - eye).normalized();
-		Vec3 s = f.cross(up).normalized();
-		Vec3 u = s.cross(f);
+	std::string to_string() const {
+		std::string result = "";
 
-		Mat4 mat = identity();
-		mat.m[0] = s.x; mat.m[4] = s.y; mat.m[8] = s.z;
-		mat.m[1] = u.x; mat.m[5] = u.y; mat.m[9] = u.z;
-		mat.m[2] = -f.x; mat.m[6] = -f.y; mat.m[10] = -f.z;
+		for(int row=0; row<4; ++row) {
+			for(int col=0; col<4; ++col) {
+				result += std::format("{:.1f} ", m[col*4 + row]);
+			}
 
-		mat.m[12] = -s.dot(eye);
-		mat.m[13] = -u.dot(eye);
-		mat.m[14] = f.dot(eye);
-		return mat;
+			result += "\n";
+		}
+
+		return result;
 	}
 };
