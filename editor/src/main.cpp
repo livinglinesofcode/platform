@@ -1,44 +1,90 @@
+#include "mesh.hpp"
 #include <SDL_keyboard.h>
 #include <SDL_mouse.h>
 #include <SDL_timer.h>
 #include <memory>
 #include <rendering/abstraction.hpp>
 #include <core/node.hpp>
-#include <core/camera.hpp>
-#include <math/vec3.hpp>
-#include <physics/static_body.hpp>
-#include <rendering/mesh.hpp>
+#include <core/camera2d.hpp>
+#include <math/vec2.hpp>
 #include <sys/stat.h>
 #include <math/utils.hpp>
+#include <iostream>
+
+struct Vertex2D {
+	float x, y;
+};
+
+bool render_quad(float s, const Mat4& ortho, const RenderingContext& ctx) {
+	s *= 0.5;
+
+	Vertex2D verts[4] = {
+		{-s,  s}, // top left
+		{ s,  s}, // top right
+		{ s, -s}, // bottom right
+		{-s, -s}  // bottom left
+	};
+
+	unsigned int indices[6] = {
+		0, 1, 2,
+		0, 3, 2
+	};
+
+	GLuint vbo;
+	glGenBuffers(1, &vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_STATIC_DRAW);
+
+	GLint a_index;
+	a_index = glGetAttribLocation(ctx.program, "a_pos");
+	if (a_index == -1) {
+		std::cerr << "a_pos vertex attribute not found" << std::endl;
+		return false;
+	}
+
+	glEnableVertexAttribArray(a_index);
+	glVertexAttribPointer(a_index, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex2D), (void*)0);
+
+	GLuint ebo;
+	glGenBuffers(1, &ebo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+	GLint u_index;
+	u_index = glGetUniformLocation(ctx.program, "u_ortho");
+	if (u_index == -1) {
+		std::cerr << "u_ortho uniform not found" << std::endl;
+		return false;
+	}
+
+	glUniformMatrix4fv(u_index, 1, GL_FALSE, ortho.m);
+	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+	return true;
+}
 
 int main() {
 	RenderingContext ctx;
 
-	const uint16_t width = 800;
-	const uint16_t height = 500;
+	const int width  = 800;
+	const int height = 500;
 	if (!ctx.create_window("Editor", width, height)) return -1;
 
 	std::unique_ptr<Node> root = std::make_unique<Node>();
 	root->name = "Root";
 
-	Camera* camera = static_cast<Camera*>(
-		root->add_child(std::make_unique<Camera>())
+	Camera2D* camera = static_cast<Camera2D*>(
+		root->add_child(std::make_unique<Camera2D>())
 	);
-	camera->local.position = Vec3::up * 5.0f;
 	camera->set_viewport_size(width, height);
 
-	ctx.upload_grid(50.0f, 5.0f);
-
+	Uint32 last = SDL_GetTicks();
 	int dx, dy;
-	const float cam_speed = 25.0f;
-	const float sensitivity = 0.5f;
-	const float rad = radians(89.9f);
-	float yaw = 0.0f;   // horizontal turn (-180, 180)
-	float pitch = 0.0f; // vertical tilt   (-90, 90)
 
 	bool running = true;
 	SDL_Event e;
-	Uint32 last = SDL_GetTicks();
+
+	// UPDATE PIPELINE //
 	while (running) {
 		while (SDL_PollEvent(&e)) {
 			if (e.type == SDL_QUIT) running = false;
@@ -48,55 +94,15 @@ int main() {
 		float dt = (now - last) / 1000.0f; // seconds
 		last = now;
 
+		// INPUT //
 		const Uint8* keys = SDL_GetKeyboardState(nullptr);
 		Uint32 buttons = SDL_GetRelativeMouseState(&dx, &dy);
 
-		// FIXME: buggy W and S, pitch zooms in
-		if (buttons & SDL_BUTTON(SDL_BUTTON_RIGHT)) {
-			// camera orientation input
-			if (buttons) {
-				yaw += sensitivity * dx * dt;
-				if (yaw >  PI) yaw -= TAU;
-				if (yaw < -PI) yaw += TAU;
-
-				pitch -= sensitivity * dy * dt;
-				pitch = std::clamp(pitch, -rad, rad);
-
-				Quat q_yaw = Quat(Vec3::up, yaw);
-				Quat q_pitch = Quat(Vec3::right, pitch);
-
-				camera->local.orientation = q_yaw * q_pitch;
-			}
-
-			printf("(%.0f, %.0f)\n", degrees(yaw), degrees(pitch));
-
-			// camera position input
-			Vec3 dir = Vec3::zero;
-
-			if (keys[SDL_SCANCODE_W]) {
-				dir += Vec3::forward;
-			}
-			if (keys[SDL_SCANCODE_A]) {
-				dir += Vec3::left;
-			}
-			if (keys[SDL_SCANCODE_S]) {
-				dir += Vec3::back;
-			}
-			if (keys[SDL_SCANCODE_D]) {
-				dir += Vec3::right;
-			}
-
-			if (dir.length() > 0.0f) {
-				dir = dir.normalized();
-			}
-
-			camera->local.position += dir * dt * cam_speed;
-		}
-
+		// RENDERING //
 		glClearColor(0.3f, 0.3f, 0.4f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		ctx.render_grid(*camera);
+		render_quad(10.0f, camera->get_ortho(), ctx);
 
 		ctx.swap_buffers();
 	}

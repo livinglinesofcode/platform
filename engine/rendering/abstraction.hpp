@@ -11,10 +11,9 @@
 #include <SDL2/SDL.h>
 #include <core/node.hpp>
 #include <fstream>
-#include <vector>
 #include <cerrno>
 #include <cstring>
-#include <core/camera.hpp>
+#include <core/camera2d.hpp>
 #include <math/mat4.hpp>
 #include <iostream>
 
@@ -106,6 +105,10 @@ struct RenderingContext {
 			return false;
 		}
 
+		GLint count;
+		glGetProgramiv(program, GL_ACTIVE_UNIFORMS, &count);
+		//std::cout << "uniforms: " << count << std::endl;
+
 		glUseProgram(program);
 		glViewport(0, 0, width, height);
 		glEnable(GL_DEPTH_TEST);
@@ -136,6 +139,8 @@ struct RenderingContext {
 		glShaderSource(shader, 1, &src, nullptr);
 		glCompileShader(shader);
 
+		//std::cout << src << std::endl;
+
 		GLint success;
 		glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
 		if (!success) {
@@ -153,72 +158,6 @@ struct RenderingContext {
 		}
 
 		return shader;
-	}
-
-	void upload_grid(float half_size, float spacing) {
-		std::vector<float> verts;
-
-		float hs = half_size * spacing;
-
-		for (float i = -half_size; i <= half_size; ++i) {
-			float is = i * spacing;
-
-			verts.push_back(-hs); verts.push_back(0.0f); verts.push_back(is);
-			verts.push_back(hs); verts.push_back(0.0f); verts.push_back(is);
-
-			verts.push_back(-is); verts.push_back(0.0f); verts.push_back(hs);
-			verts.push_back(is); verts.push_back(0.0f); verts.push_back(hs);
-		}
-
-		grid_vertex_count = static_cast<int>(verts.size() / 3);
-
-		glGenBuffers(1, &grid_VBO);
-		glBindBuffer(GL_ARRAY_BUFFER, grid_VBO);
-
-		glBufferData(
-			GL_ARRAY_BUFFER,
-			static_cast<GLsizeiptr>(verts.size() * sizeof(float)),
-			verts.data(),
-			GL_STATIC_DRAW
-		);
-
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-	}
-
-	void render_grid(const Camera& camera) {
-		glBindBuffer(GL_ARRAY_BUFFER, grid_VBO);
-
-		GLuint pos = static_cast<GLuint>(glGetAttribLocation(program, "a_pos"));
-		glEnableVertexAttribArray(pos);
-
-		glVertexAttribPointer(
-			pos,
-			3,
-			GL_FLOAT,
-			GL_FALSE,
-			3 * sizeof(float),
-			(void*)0
-		);
-
-		const Mat4 proj = camera.get_projection();
-		std::cout << proj.to_string();
-
-		Mat4 model = Mat4::identity();
-		std::cout << model.to_string();
-
-		Mat4 view = Mat4::rotate(camera.local.orientation.conjugate()) *
-					Mat4::translate(-camera.local.position);
-		std::cout << view.to_string();
-
-		Mat4 mvp = proj * view * model;
-		std::cout << mvp.to_string();
-
-		GLint loc = glGetUniformLocation(program, "u_mvp");
-		glUniformMatrix4fv(loc, 1, GL_FALSE, mvp.m);
-
-		glDrawArrays(GL_LINES, 0, grid_vertex_count);
-
-		glad_glDisableVertexAttribArray(pos);
 	}
 
 	void swap_buffers() {

@@ -8,6 +8,8 @@ struct Vec2 {
 
 	Vec2 operator-() const { return {-x, -y}; }
 
+	Vec2 operator*(float s) const { return {x*s, y*s}; }
+
 	static const Vec2 zero;
 	static const Vec2 one;
 	static const Vec2 right;

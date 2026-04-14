@@ -2,7 +2,7 @@
 
 #include <vector>
 #include <memory>
-#include <math/transform.hpp>
+#include <math/transform2d.hpp>
 
 class Node {
 protected:
@@ -27,9 +27,9 @@ public:
 	const std::vector<std::unique_ptr<Node>>& get_children() const { return children; }
 };
 
-class SpatialNode : public Node {
+class Node2D : public Node {
 public:
-	SpatialNode() { name = "SpatialNode"; }
+	Node2D() { name = "Node2D"; }
 
-	Transform local;
+	Transform2D local;
 };

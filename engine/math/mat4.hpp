@@ -63,18 +63,22 @@ struct Mat4 {
 		*this = *this * rhs;
 	}
 
-	// +Z forward
-	static Mat4 perspective(float fov, float aspect, float near, float far) {
-		Mat4 mat = {};
-		float tan_half_fov = std::tan(fov * 0.5f);
+	static Mat4 ortho(float l, float r, float b, float t, float n, float f) {
+		Mat4 m = {};
 
-		mat.m[0] = 1.0f / (aspect * tan_half_fov);
-		mat.m[5] = 1.0f / (tan_half_fov);
-		mat.m[10] = (far + near) / (far - near);
-		mat.m[11] = 1.0f;
-		mat.m[14] = (2*far*near)/(far - near);
+		float rl = r - l; float tb = t - b; float fn = f - n;
 
-		return mat;
+		m.m[0]  =  2.0f / (rl);
+		m.m[5]  =  2.0f / (tb);
+		m.m[10] = -2.0f / (fn);
+
+		m.m[12] = -(r + l) / rl;
+		m.m[13] = -(t + b) / tb;
+		m.m[14] = -(f + n) / fn;
+
+		m.m[15] = 1.0f;
+
+		return m;
 	}
 
 	std::string to_string() const {
