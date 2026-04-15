@@ -32,9 +32,11 @@ public:
 
 	Mat4 get_view() const {
 		float z = 1.0f / zoom;
+		Transform2D t = get_world_transform();
+		t.scale = Vec2::one;
 
 		return
 			Mat4::scale(Vec3(z, z, 1.0f)) *
-			get_world_transform().inverse();
+			t.inverse();
 	}
 };

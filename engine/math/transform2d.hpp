@@ -1,8 +1,8 @@
 #pragma once
 
 #include "vec2.hpp"
-#include <math/utils.hpp>
-#include <math/mat4.hpp>
+#include "utils.hpp"
+#include "mat4.hpp"
 
 struct Transform2D {
 private:
@@ -44,5 +44,20 @@ public:
 			Mat4::scale(Vec3(sx, sy, 1.0f)) *
 			Mat4::rotate(Quat(Vec3(0.0f, 0.0f, 1.0f), o)) *
 			Mat4::translate(Vec3(p.x, p.y, 0.0f));
+	}
+
+	Mat4 model() const {
+		return Mat4::translate(Vec3(position.x, position.y, 0.0f)) *
+			   Mat4::rotate(Quat(Vec3(0, 0, 1), orientation)) *
+			   Mat4::scale(Vec3(scale.x, scale.y, 1.0f));
+	}
+
+	std::string to_string() const {
+		// compiler was fighting std::format for no reason
+		return std::string("Transform2D {\n") +
+							  "   position: " + position.to_string() + ";\n" +
+							  "   orientation: " + format_float(orientation) + ";\n" +
+							  "   scale: " + scale.to_string() + ";\n" +
+							  "}\n";
 	}
 };

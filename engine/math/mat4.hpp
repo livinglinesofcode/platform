@@ -2,7 +2,6 @@
 
 #include "vec3.hpp"
 #include "quat.hpp"
-#include <iostream>
 
 // collumn-major for OpenGL ES 2.0
 struct Mat4 {

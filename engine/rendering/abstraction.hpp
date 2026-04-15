@@ -11,7 +11,6 @@
 #include <fstream>
 #include <cerrno>
 #include <cstring>
-#include <iostream>
 
 struct RenderingContext {
 	SDL_Window* window = nullptr;

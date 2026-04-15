@@ -11,6 +11,41 @@
 #include <math/utils.hpp>
 #include <iostream>
 
+struct Renderable {
+	Node2D* node;
+	Transform2D world;
+};
+
+void gather_renderables(Node* node, std::vector<Renderable>& out) {
+	if (auto* n2d = dynamic_cast<Node2D*>(node)) {
+		if (n2d->mesh) {
+			out.push_back({
+				n2d,
+				n2d->get_world_transform()
+			});
+		}
+	}
+
+	for (const auto& child : node->get_children()) {
+		gather_renderables(child, out);
+	}
+}
+
+void render_root(const RenderingContext& ctx, Node* root, const Mat4& view, const Mat4& ortho) {
+	std::vector<Renderable> r;
+	gather_renderables(root, r);
+	std::sort(r.begin(), r.end(), [](const Renderable& a, const Renderable& b) {
+		return a.node->z_index < b.node->z_index;
+	});
+
+	Mat4 vp = ortho * view;
+
+	for (auto renderable : r) {
+		Mat4 mvp = vp * renderable.world.model();
+		renderable.node->mesh->render(ctx, mvp);
+	}
+}
+
 int main() {
 	RenderingContext ctx;
 
@@ -22,16 +57,22 @@ int main() {
 	}
 
 	std::unique_ptr<Node> root = std::make_unique<Node>();
-	root->name = "Root";
-
-	Camera2D* camera = root->add_child(std::make_unique<Camera2D>());
-	camera->set_viewport_size(width, height);
+	Node* root_ptr = root.get();
+	root_ptr->name = "Root";
 
 	Node2D* cube = root->add_child(std::make_unique<Node2D>());
 	cube->mesh = &Mesh::quad();
-	cube->local.position = Vec2::right * 200.0f;
-	cube->local.scale = Vec2::one * 150.0f;
-	cube->local.set_orientation(PI/4.0f);
+	cube->set_position(Vec2::right * 200.0f);
+	cube->set_scale(Vec2::one * 150.0f);
+	cube->set_orientation(PI/4.0f);
+
+	Node2D* cube2 = cube->add_child(std::make_unique<Node2D>());
+	cube2->mesh = &Mesh::quad();
+	cube2->set_position(Vec2::right * 50.0f);
+	cube2->set_scale(Vec2::one);
+
+	Camera2D* camera = root->add_child(std::make_unique<Camera2D>());
+	camera->set_viewport_size(width, height);
 
 	Uint32 last = SDL_GetTicks();
 	int dx, dy;
@@ -70,26 +111,12 @@ int main() {
 			dir += Vec2::right;
 		}
 
-		camera->local.position += dir.normalized() * dt * cam_speed;
+		cube->set_position(cube->get_position() + dir.normalized() * dt * cam_speed);
 
 		// RENDERING //
 		glClearColor(0.3f, 0.3f, 0.4f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-		Transform2D t   = cube->get_world_transform();
-
-		Mat4 model      =
-			Mat4::translate(Vec3(t.position.x, t.position.y, 0.0f)) *
-			Mat4::rotate(Quat(Vec3(0, 0, 1), t.get_orientation())) *
-			Mat4::scale(Vec3(t.scale.x, t.scale.y, 1.0f));
-
-		Mat4 view       = camera->get_view();
-		Mat4 projection = camera->get_ortho();
-
-		Mat4 mvp = projection * view * model;
-
-		cube->mesh->render(ctx, mvp);
-
+		render_root(ctx, root_ptr, camera->get_view(), camera->get_ortho());
 		ctx.swap_buffers();
 	}
 	

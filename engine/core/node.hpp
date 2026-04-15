@@ -26,18 +26,33 @@ public:
 		return raw;
 	}
 
-	const std::vector<std::unique_ptr<Node>>& get_children() const { return children; }
+	virtual void mark_dirty() {
+		for (const auto& child : children) {
+			child.get()->mark_dirty();
+		}
+	}
+
+	const std::vector<Node*> get_children() const {
+		std::vector<Node*> vec;
+
+		for (const std::unique_ptr<Node>& c : children) {
+			vec.push_back(c.get());
+		}
+
+		return vec;
+	}
 };
 
 class Node2D : public Node {
 private:
+	mutable Transform2D local;
 	mutable Transform2D world;
 	mutable bool dirty = true;
 public:
 	Node2D() { name = "Node2D"; }
 
-	Transform2D local;
 	Mesh* mesh = nullptr;
+	int z_index;
 
 	Transform2D get_world_transform() const {
 		Node2D* parent = dynamic_cast<Node2D*>(get_parent());
@@ -46,12 +61,12 @@ public:
 			return local;
 		}
 
-		if (dirty) {
+		if (dirty || parent->dirty) {
 			Transform2D pt = parent->get_world_transform();
 
 			world.scale = pt.scale * local.scale;
 			world.set_orientation(pt.get_orientation() * local.get_orientation());
-			world.position = pt.position + (local.position * pt.scale).rotate(pt.get_orientation());
+			world.position = pt.position + local.position.rotate(pt.get_orientation());
 
 			dirty = false;
 		}
@@ -59,5 +74,26 @@ public:
 		return world;
 	}
 
-	bool get_dirty() const { return dirty; }
+	void mark_dirty() override {
+		dirty = true;
+		Node::mark_dirty();
+	}
+
+	Vec2 get_position() const { return local.position; }
+	void set_position(const Vec2& v) {
+		local.position = v;
+		mark_dirty();
+	}
+
+	float get_orientation() const { return local.get_orientation(); }
+	void set_orientation(float o) {
+		local.set_orientation(o);
+		mark_dirty();
+	}
+
+	Vec2 get_scale() const { return local.scale; }
+	void set_scale(const Vec2& s) {
+		local.scale = s;
+		mark_dirty();
+	}
 };
