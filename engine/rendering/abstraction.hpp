@@ -6,15 +6,11 @@
 #include "SDL_error.h"
 #include "SDL_messagebox.h"
 #include "SDL_video.h"
-#include "rendering/mesh.hpp"
 #include <glad/glad.h>
 #include <SDL2/SDL.h>
-#include <core/node.hpp>
 #include <fstream>
 #include <cerrno>
 #include <cstring>
-#include <core/camera2d.hpp>
-#include <math/mat4.hpp>
 #include <iostream>
 
 struct RenderingContext {
@@ -22,8 +18,8 @@ struct RenderingContext {
 	SDL_GLContext context = nullptr;
 	GLuint program;
 	
-	GLuint grid_VBO;
-	int grid_vertex_count;
+	GLint a_pos;
+	GLint u_mvp;
 
 	bool create_window(const char* title, int width, int height) {
 		if (SDL_Init(SDL_INIT_VIDEO) != 0) { 
@@ -105,9 +101,10 @@ struct RenderingContext {
 			return false;
 		}
 
-		GLint count;
-		glGetProgramiv(program, GL_ACTIVE_UNIFORMS, &count);
-		//std::cout << "uniforms: " << count << std::endl;
+		a_pos = glGetAttribLocation(program, "a_pos");
+		if (a_pos == -1) return false;
+		u_mvp = glGetUniformLocation(program, "u_mvp");
+		if (u_mvp == -1) return false;
 
 		glUseProgram(program);
 		glViewport(0, 0, width, height);

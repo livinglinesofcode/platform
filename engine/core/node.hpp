@@ -3,6 +3,7 @@
 #include <vector>
 #include <memory>
 #include <math/transform2d.hpp>
+#include <rendering/mesh.hpp>
 
 class Node {
 protected:
@@ -14,10 +15,11 @@ public:
 
 	Node* get_parent() const { return parent; }
 
-	Node* add_child(std::unique_ptr<Node> child) {
+	template <typename T>
+	T* add_child(std::unique_ptr<T> child) {
 		child->parent = this;
 
-		Node* raw = child.get();
+		T* raw = child.get();
 
 		children.push_back(std::move(child));
 
@@ -32,4 +34,5 @@ public:
 	Node2D() { name = "Node2D"; }
 
 	Transform2D local;
+	Mesh mesh;
 };

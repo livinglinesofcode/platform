@@ -2,6 +2,7 @@
 
 #include "vec3.hpp"
 #include "quat.hpp"
+#include <iostream>
 
 // collumn-major for OpenGL ES 2.0
 struct Mat4 {
@@ -15,9 +16,11 @@ struct Mat4 {
 
 	static Mat4 translate(const Vec3& v) {
 		Mat4 mat = identity();
+
 		mat.m[12] = v.x;
 		mat.m[13] = v.y;
 		mat.m[14] = v.z;
+
 		return mat;
 	}
 
@@ -39,6 +42,17 @@ struct Mat4 {
 		mat.m[8] = 2*(xz + wy);
 		mat.m[9] = 2*(yz - wx);
 		mat.m[10] = 1 - 2*(xx+yy);
+
+		return mat;
+	}
+
+	static Mat4 scale(const Vec3& s) {
+		Mat4 mat = identity();
+
+		mat.m[0]  = s.x;
+		mat.m[5]  = s.y;
+		mat.m[10] = s.z;
+		mat.m[15] = 1.0f;
 
 		return mat;
 	}
@@ -66,7 +80,9 @@ struct Mat4 {
 	static Mat4 ortho(float l, float r, float b, float t, float n, float f) {
 		Mat4 m = {};
 
-		float rl = r - l; float tb = t - b; float fn = f - n;
+		float rl = r - l;
+		float tb = t - b;
+		float fn = f - n;
 
 		m.m[0]  =  2.0f / (rl);
 		m.m[5]  =  2.0f / (tb);
