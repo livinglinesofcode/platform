@@ -27,8 +27,11 @@ int main() {
 	Camera2D* camera = root->add_child(std::make_unique<Camera2D>());
 	camera->set_viewport_size(width, height);
 
-	Node2D* node = root->add_child(std::make_unique<Node2D>());
-	node->mesh = Mesh::quad(400.0f);
+	Node2D* cube = root->add_child(std::make_unique<Node2D>());
+	cube->mesh = &Mesh::quad();
+	cube->local.position = Vec2::right * 200.0f;
+	cube->local.scale = Vec2::one * 150.0f;
+	cube->local.set_orientation(PI/4.0f);
 
 	Uint32 last = SDL_GetTicks();
 	int dx, dy;
@@ -67,23 +70,25 @@ int main() {
 			dir += Vec2::right;
 		}
 
-		dir = dir.normalized() * dt * cam_speed;
-
-		camera->set_position(camera->get_position() + dir);
+		camera->local.position += dir.normalized() * dt * cam_speed;
 
 		// RENDERING //
 		glClearColor(0.3f, 0.3f, 0.4f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		Vec2 pos        = node->local.position;
-		Mat4 model      = Mat4::translate(Vec3(pos.x, pos.y, 0.0f));
+		Transform2D t   = cube->get_world_transform();
+
+		Mat4 model      =
+			Mat4::translate(Vec3(t.position.x, t.position.y, 0.0f)) *
+			Mat4::rotate(Quat(Vec3(0, 0, 1), t.get_orientation())) *
+			Mat4::scale(Vec3(t.scale.x, t.scale.y, 1.0f));
+
 		Mat4 view       = camera->get_view();
 		Mat4 projection = camera->get_ortho();
 
 		Mat4 mvp = projection * view * model;
-		//std::cout << view.to_string() << std::endl;
 
-		node->mesh.render(ctx, mvp);
+		cube->mesh->render(ctx, mvp);
 
 		ctx.swap_buffers();
 	}
