@@ -8,6 +8,7 @@
 #include <math/utils.hpp>
 //#include <iostream>
 
+// TODO: add cached world space to Node2D + dirty flag and render using camera world space
 class Camera2D : public Node {
 private:
 	Vec2 position = Vec2::zero;
